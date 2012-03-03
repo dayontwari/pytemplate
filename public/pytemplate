@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+# title          : pytemplate
+#description     : This will create a template python file.
+#author          : Dayo Adewunmi
+#date            : 20120303
+#version         : 0.1
+#usage           : python pytemplate
+#notes           :
+#python_version  : 2.6.6  
+#==============================================================================
+
+# Import the modules needed to run the script.
+from os.path import exists
+from time import strftime
+import os
+import sys
+
+# Prompt user to input filename of the python file
+filename = raw_input("Enter a filename for your python file: ")
+
+# Replace spaces in the filename with underscore.
+filename = filename.replace(' ', '_')
+
+# Check to see if the filename already exists.
+# If it already exists, prompt user for a new filename.
+while exists(filename):
+    print "\nA file with this name already exists."
+    filename = raw_input("\nEnter a different filename for your python file: ")
+
+# Prompt user to input python file description
+filedescription = raw_input("Enter a description for your python file: ")
+
+# Prompt user to enter their name
+author = raw_input("Enter your name: ")
+
+# Prompt user to enter their name
+authoremail = raw_input("Enter your email address: ")
+
+# Prompt user to enter the python file's version number
+fileversion = raw_input("Enter the python file's version number: ")
+
+# Some cosmetics for the formatting
+div = '======================================='
+
+# Create a file that can be written to.
+pythonfile = open(filename, 'w')
+
+# Auto-set the date in the file's header
+filedate = strftime("%Y%m%d")
+
+# Write the provided data to the file.
+pythonfile.write('#!/usr/bin/env python')
+pythonfile.write('\n# Filename\t\t: ' + filename)
+pythonfile.write('\n# Description\t\t: ' + filedescription)
+pythonfile.write('\n# Author\t\t\t: ' + author)
+pythonfile.write('\n# Email:\t\t\t: ' + authoremail)
+pythonfile.write('\n# Date\t\t\t: ' + filedate)
+pythonfile.write('\n# Version\t\t\t: ' + fileversion)
+pythonfile.write('\n# Usage\t\t\t: ')
+pythonfile.write('\n# Notes\t\t\t: ')
+# Get python version
+pythonversion = sys.version # This will spit out a bunch of other info, so slice it
+pythonfile.write('\n# Python version\t: %s' %str((pythonversion[:5])))
+pythonfile.write('\n#' + div * 2 + '\n')
+pythonfile.write('\n')
+pythonfile.write('\n')
+
+# Close the file after writing to it.
+pythonfile.close()
+
+# Clear the screen. This line of code will not work on Windows, but what does?
+os.system("clear") 
+
+def select_editor():
+    '''Open the file with whatever editor set in $EDITOR environment var.'''
+    myeditor = os.environ["EDITOR"] + " %s" % filename
+    os.system(myeditor)
+    exit()
+
+select_editor()
