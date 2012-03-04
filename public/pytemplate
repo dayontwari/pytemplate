@@ -39,6 +39,9 @@ authoremail = raw_input("Enter your email address: ")
 # Prompt user to enter the python file's version number
 fileversion = raw_input("Enter the python file's version number: ")
 
+# Prompt user to enter the python file's licensing information
+licensinginfo = raw_input("Enter the python file's licensing information: ")
+
 # Some cosmetics for the formatting
 div = '======================================='
 
@@ -56,6 +59,7 @@ pythonfile.write('\n# Author\t\t\t: ' + author)
 pythonfile.write('\n# Email:\t\t\t: ' + authoremail)
 pythonfile.write('\n# Date\t\t\t: ' + filedate)
 pythonfile.write('\n# Version\t\t\t: ' + fileversion)
+pythonfile.write('\n# Licensing\t\t: ' + licensinginfo)
 pythonfile.write('\n# Usage\t\t\t: ')
 pythonfile.write('\n# Notes\t\t\t: ')
 # Get python version
