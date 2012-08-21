@@ -1,84 +1,195 @@
 #!/usr/bin/env python
 # title          : pytemplate
-#description     : This will create a template python file.
+#description     : This will create a template python file, and optionally
+#                   create a git repo for it.
 #author          : Dayo Adewunmi
-#date            : 20120303
-#version         : 0.1
+#date            : 20120821
+#version         : 0.3
 #usage           : python pytemplate
 #notes           :
 #python_version  : 2.6.6  
 #==============================================================================
 
 # Import the modules needed to run the script.
+import ConfigParser
+from optparse import OptionParser
 from os.path import exists
 from time import strftime
 import os
+import shutil
+import subprocess
 import sys
 
-# Prompt user to input filename of the python file
-filename = raw_input("Enter a filename for your python file: ")
+def setConfig():
+    """ Prompt for configuration options. """
+    config = ConfigParser.ConfigParser()
 
-# Replace spaces in the filename with underscore.
-filename = filename.replace(' ', '_')
+    # Prompt for filename of the python file
+    filename = raw_input("Enter a filename for your python file: ")
 
-# Check to see if the filename already exists.
-# If it already exists, prompt user for a new filename.
-while exists(filename):
-    print "\nA file with this name already exists."
-    filename = raw_input("\nEnter a different filename for your python file: ")
+    # Replace spaces in the filename with underscore.
+    filename = filename.replace(' ', '_')
 
-# Prompt user to input python file description
-filedescription = raw_input("Enter a description for your python file: ")
+    # Check to see if the filename already exists.
+    # If it already exists, prompt for a new filename.
+    while exists(filename):
+        print "\nA file with this name already exists."
+        filename = raw_input("\nEnter a different filename for your python file: ")
 
-# Prompt user to enter their name
-author = raw_input("Enter your name: ")
+    # Prompt for python file description
+    filedescription = raw_input("Enter a description for your python file: ")
+    
+    # Prompt for the python file's version number
+    fileversion = raw_input("Enter the python file's version number: ")
+    
+    # Auto-set the date in the file's header
+    filedate = strftime("%Y%m%d")
 
-# Prompt user to enter their name
-authoremail = raw_input("Enter your email address: ")
+    config.add_section("file")
 
-# Prompt user to enter the python file's version number
-fileversion = raw_input("Enter the python file's version number: ")
+    config.set("file", "description", filedescription)
 
-# Prompt user to enter the python file's licensing information
-licensinginfo = raw_input("Enter the python file's licensing information: ")
+    config.set("file", "fileversion", fileversion)
+    config.set("file", "date", filedate)
 
-# Some cosmetics for the formatting
-div = '======================================='
+    # Prompt for author name
+    author = raw_input("Enter your name: ")
 
-# Create a file that can be written to.
-pythonfile = open(filename, 'w')
+    # Prompt for author email address
+    authoremail = raw_input("Enter your email address: ")
 
-# Auto-set the date in the file's header
-filedate = strftime("%Y%m%d")
+    config.add_section("author")
+    config.set("author", "author", author)
+    config.set("author", "email", authoremail)
 
-# Write the provided data to the file.
-pythonfile.write('#!/usr/bin/env python')
-pythonfile.write('\n# Filename\t\t: ' + filename)
-pythonfile.write('\n# Description\t\t: ' + filedescription)
-pythonfile.write('\n# Author\t\t\t: ' + author)
-pythonfile.write('\n# Email:\t\t\t: ' + authoremail)
-pythonfile.write('\n# Date\t\t\t: ' + filedate)
-pythonfile.write('\n# Version\t\t\t: ' + fileversion)
-pythonfile.write('\n# Licensing\t\t: ' + licensinginfo)
-pythonfile.write('\n# Usage\t\t\t: ')
-pythonfile.write('\n# Notes\t\t\t: ')
-# Get python version
-pythonversion = sys.version # This will spit out a bunch of other info, so slice it
-pythonfile.write('\n# Python version\t: %s' %str((pythonversion[:5])))
-pythonfile.write('\n#' + div * 2 + '\n')
-pythonfile.write('\n')
-pythonfile.write('\n')
+    # Prompt python file's licensing information
+    licensinginfo = raw_input("Enter the python file's licensing information: ")
 
-# Close the file after writing to it.
-pythonfile.close()
+    config.add_section("license")
+    config.set("license", "license", licensinginfo)
 
-# Clear the screen. This line of code will not work on Windows, but what does?
-os.system("clear") 
+    # Get Python version
+    pythonversion = sys.version[:5] # This will spit out a bunch of other info, so slice it
 
-def select_editor():
-    '''Open the file with whatever editor set in $EDITOR environment var.'''
-    myeditor = os.environ["EDITOR"] + " %s" % filename
+    config.add_section("python_version")
+    print "python_version:%s" %(pythonversion)
+    config.set("python_version", "python_version", pythonversion)
+
+    # Write it all to config file
+    with open('/home/dayo/.pytemplate.conf', 'wb') as configfile:
+        config.write(configfile)
+
+    return config
+
+def readConfig(repo=0):
+    """ Read configuration from config file and write to python file."""
+
+    # Get config
+    config = ConfigParser.ConfigParser()
+    config.read('/home/dayo/.pytemplate.conf')
+
+    # Prompt for filename of the python file
+    filename = raw_input("Enter a filename for your python file: ")
+
+    destdir = os.getcwd()
+    
+    # If requested, first create the git repo and point the path
+    # to the repo's ./public directory.
+    if repo:
+        reponame = os.path.splitext(filename)[0]
+        destdir = createGitRepo(reponame)
+            
+    # Open python file with pre-configured header
+    pyfile = os.path.abspath(destdir) + "/" + filename
+    pyfileObj = open(pyfile, "w")
+
+    # Shebang line
+    pyfileObj.write('#!/usr/bin/env python')
+    pyfileObj.write('\n')
+   
+    pyfileObj.write('# filename: ')
+    pyfileObj.write(filename)
+    pyfileObj.write('\n')
+
+    pyfileObj.write('# description: ')
+    # Prompt for python file description in case user wants to override.
+    filedescription = raw_input("Enter a description for your python file: ")
+    # If user does not want to override, take description from config.
+    if filedescription == '':
+        pyfileObj.write(config.get("file", "description"))
+        pyfileObj.write('\n')
+    else:
+        pyfileObj.write(filedescription)
+        pyfileObj.write('\n')
+
+    pyfileObj.write('# fileversion: ')
+    # Prompt for the python file's version number in case user wants to override.
+    fileversion = raw_input("Enter the python file's version number: ")
+    # If user does not want to override, take file version from config.
+    if fileversion == '':
+        pyfileObj.write(config.get("file", "fileversion"))
+        pyfileObj.write('\n')
+    else:
+        pyfileObj.write(fileversion)
+        pyfileObj.write('\n')
+
+    pyfileObj.write('# date: ')
+    pyfileObj.write(config.get("file", "date"))
+    pyfileObj.write('\n')
+    pyfileObj.write('# author: ')
+    pyfileObj.write(config.get("author", "author"))
+    pyfileObj.write('\n')
+    pyfileObj.write('# email: ')
+    pyfileObj.write(config.get("author", "email"))
+    pyfileObj.write('\n')
+    pyfileObj.write('# license: ')
+    pyfileObj.write(config.get("license", "license"))
+    pyfileObj.write('\n')
+    pyfileObj.write('# python version: ')
+    pyfileObj.write(config.get("python_version", "python_version"))
+    pyfileObj.write('\n')
+
+    pyfileObj.close()
+        
+    myeditor = os.environ["EDITOR"] + " %s" %pyfile
     os.system(myeditor)
     exit()
 
-select_editor()
+def createGitRepo(justpyfilename):
+    """ Create a git repo for the python file with the same name as the python file. """
+
+    repoPath = os.path.abspath(justpyfilename)
+    
+    subprocess.call(["mkdir", repoPath])
+    subprocess.call(["mkdir", repoPath + "/public"])
+    subprocess.call(["mkdir", repoPath + "/doc"])
+    subprocess.call(["touch", repoPath + "/doc/README"])
+
+    repoPublicPath = repoPath + "/public"
+
+    return repoPublicPath
+
+def main():
+    # Command line parameters
+    usage = "Usage: %prog [options] arg"
+    parser = OptionParser(usage)
+    parser.add_option("-f", "--from-file", dest="from_file", action="store_true", help="read from configuration file")
+    parser.add_option("-c", "--config", dest="config_file", help="configure pytemplate")
+    parser.add_option("-g", "--git-repo", dest="git_repo", action="store_true", help="create a git repo for this file")
+
+    (options, args) = parser.parse_args()
+    
+    # If user wants to configure pytemplate
+    if options.config_file:
+        setConfig()
+
+    # If user wants to use options from config file
+    if options.from_file:
+        # If user also wants a git repo created for the python file
+        if options.git_repo:
+            readConfig(1)
+        else:
+            readConfig()
+
+if __name__ == "__main__":
+    main()
