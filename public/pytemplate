@@ -4,7 +4,7 @@
 #                   create a git repo for it.
 #author          : Dayo Adewunmi
 #date            : 20120821
-#version         : 0.3
+#version         : 0.3.1
 #usage           : python pytemplate
 #notes           :
 #python_version  : 2.6.6  
@@ -20,6 +20,12 @@ import shutil
 import subprocess
 import sys
 
+def replaceWhiteSpace(whiteSpaceInFilename):
+    """ Replace all the whitespacewith underscores. """
+    noWhiteSpaceInFilename = whiteSpaceInFilename.replace(' ', '_')
+
+    return noWhiteSpaceInFilename
+
 def setConfig():
     """ Prompt for configuration options. """
     config = ConfigParser.ConfigParser()
@@ -28,7 +34,7 @@ def setConfig():
     filename = raw_input("Enter a filename for your python file: ")
 
     # Replace spaces in the filename with underscore.
-    filename = filename.replace(' ', '_')
+    filename = replaceWhiteSpace(filename)
 
     # Check to see if the filename already exists.
     # If it already exists, prompt for a new filename.
@@ -91,6 +97,9 @@ def readConfig(repo=0):
     # Prompt for filename of the python file
     filename = raw_input("Enter a filename for your python file: ")
 
+    # Replace spaces in the filename with underscore.
+    filename = replaceWhiteSpace(filename)
+
     destdir = os.getcwd()
     
     # If requested, first create the git repo and point the path
@@ -148,6 +157,20 @@ def readConfig(repo=0):
     pyfileObj.write('# python version: ')
     pyfileObj.write(config.get("python_version", "python_version"))
     pyfileObj.write('\n')
+
+    # Also an empty main() definition
+    pyfileObj.write('\n\n\n\n')
+    pyfileObj.write('def main():')
+    pyfileObj.write('\n')
+    pyfileObj.write("    print \'\'")
+    pyfileObj.write('\n\n')
+    pyfileObj.write('if __name__ == \"__main__\":')
+    pyfileObj.write('\n')
+    pyfileObj.write('    main()')
+
+    # Make the python file executable
+    os.chmod(pyfile, 0755)
+    #os.chmod(filename, 0755)
 
     pyfileObj.close()
         
