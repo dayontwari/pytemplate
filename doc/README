@@ -19,9 +19,7 @@ Installation:
     1. Copy pytemplate to /usr/local/bin and make sure permissions
         are set to rwxr-xr-x ($ chmod 755 /usr/local/bin/pytemplate)
 Usage:
-    1. Open a terminal window and change to the directory where
-        the template python file is to be created.
-    2. Run this command: $ pytemplate  and enter the prompted information.
+    1. Run `pytemplate -h` for a list of options.
 Feedback:
     Any type of helpful feedback is always welcome. You can also
     come see me on Diaspora: http://joindiaspora.com/jargon, or send me
