@@ -4,7 +4,7 @@
 #                   create a git repo for it.
 #author          : Dayo Adewunmi
 #date            : 20120821
-#version         : 0.3.1
+#version         : 0.3.2
 #usage           : python pytemplate
 #notes           :
 #python_version  : 2.6.6  
@@ -196,7 +196,7 @@ def main():
     # Command line parameters
     usage = "Usage: %prog [options] arg"
     parser = OptionParser(usage)
-    parser.add_option("-f", "--from-file", dest="from_file", action="store_true", help="read from configuration file")
+    #parser.add_option("-f", "--from-file", dest="from_file", action="store_true", help="read from configuration file")
     parser.add_option("-c", "--config", dest="config_file", help="configure pytemplate")
     parser.add_option("-g", "--git-repo", dest="git_repo", action="store_true", help="create a git repo for this file")
 
@@ -206,13 +206,12 @@ def main():
     if options.config_file:
         setConfig()
 
-    # If user wants to use options from config file
-    if options.from_file:
-        # If user also wants a git repo created for the python file
-        if options.git_repo:
-            readConfig(1)
-        else:
-            readConfig()
+    # If user also wants a git repo created for the python file
+    if options.git_repo:
+        readConfig(1)
+    # Default is to use options from config file
+    else:
+        readConfig()
 
 if __name__ == "__main__":
     main()
