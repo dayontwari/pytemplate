@@ -4,7 +4,7 @@
 #                   create a git repo for it.
 #author          : Dayo Adewunmi
 #date            : 20120821
-#version         : 0.3.2
+#version         : 0.3.3
 #usage           : python pytemplate
 #notes           :
 #python_version  : 2.6.6  
@@ -143,7 +143,7 @@ def readConfig(repo=0):
         pyfileObj.write('\n')
 
     pyfileObj.write('# date: ')
-    pyfileObj.write(config.get("file", "date"))
+    pyfileObj.write(strftime("%Y%m%d"))
     pyfileObj.write('\n')
     pyfileObj.write('# author: ')
     pyfileObj.write(config.get("author", "author"))
