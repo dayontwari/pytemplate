@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # title          : pytemplate
-#description     : This will create a template python file, and optionally
+#description     : This will create a python file from a template, and optionally
 #                   create a git repo for it.
 #author          : Dayo Adewunmi
-#date            : 20120821
-#version         : 0.3.3
-#usage           : python pytemplate
+#date            : 20130113
+#version         : 1.0
 #notes           :
+#license         : GNU GPL3 http://www.gnu.org/licenses/
 #python_version  : 2.6.6  
 #==============================================================================
 
@@ -20,43 +20,9 @@ import shutil
 import subprocess
 import sys
 
-def replaceWhiteSpace(whiteSpaceInFilename):
-    """ Replace all the whitespacewith underscores. """
-    noWhiteSpaceInFilename = whiteSpaceInFilename.replace(' ', '_')
-
-    return noWhiteSpaceInFilename
-
-def setConfig():
-    """ Prompt for configuration options. """
+def createConfigFile():
+    """ Prompt for configuration options and write them to ~/.pytemplate.conf. """
     config = ConfigParser.ConfigParser()
-
-    # Prompt for filename of the python file
-    filename = raw_input("Enter a filename for your python file: ")
-
-    # Replace spaces in the filename with underscore.
-    filename = replaceWhiteSpace(filename)
-
-    # Check to see if the filename already exists.
-    # If it already exists, prompt for a new filename.
-    while exists(filename):
-        print "\nA file with this name already exists."
-        filename = raw_input("\nEnter a different filename for your python file: ")
-
-    # Prompt for python file description
-    filedescription = raw_input("Enter a description for your python file: ")
-    
-    # Prompt for the python file's version number
-    fileversion = raw_input("Enter the python file's version number: ")
-    
-    # Auto-set the date in the file's header
-    filedate = strftime("%Y%m%d")
-
-    config.add_section("file")
-
-    config.set("file", "description", filedescription)
-
-    config.set("file", "fileversion", fileversion)
-    config.set("file", "date", filedate)
 
     # Prompt for author name
     author = raw_input("Enter your name: ")
@@ -68,112 +34,115 @@ def setConfig():
     config.set("author", "author", author)
     config.set("author", "email", authoremail)
 
-    # Prompt python file's licensing information
     licensinginfo = raw_input("Enter the python file's licensing information: ")
 
     config.add_section("license")
     config.set("license", "license", licensinginfo)
 
-    # Get Python version
-    pythonversion = sys.version[:5] # This will spit out a bunch of other info, so slice it
-
-    config.add_section("python_version")
-    print "python_version:%s" %(pythonversion)
-    config.set("python_version", "python_version", pythonversion)
-
     # Write it all to config file
-    with open('/home/dayo/.pytemplate.conf', 'wb') as configfile:
+    with open(os.getenv('HOME') + '/.pytemplate.conf', 'wb') as configfile:
         config.write(configfile)
 
     return config
 
-def readConfig(repo=0):
-    """ Read configuration from config file and write to python file."""
+def createPyFile(repo=0):
+    """ When user doesn't provide a value, read from config file and 
+        write to python file, else use the values provided user."""
 
-    # Get config
+    # Get config file
     config = ConfigParser.ConfigParser()
-    config.read('/home/dayo/.pytemplate.conf')
+    config.read(os.getenv('HOME') + '/.pytemplate.conf')
 
-    # Prompt for filename of the python file
-    filename = raw_input("Enter a filename for your python file: ")
+    # Prompt for filename of the python file.
+    # filename is required, so keep prompting until it is provided.
+    filename = ''
+    while filename == '':
+        filename = raw_input("Please enter a filename for your python file: ")
+        # Check if filename already exists, if it does, reset the filename variable.
+        if exists(filename):
+            print "\nFile already exists. Please use a different filename."
+            filename = ''
 
-    # Replace spaces in the filename with underscore.
-    filename = replaceWhiteSpace(filename)
-
-    destdir = os.getcwd()
-    
     # If requested, first create the git repo and point the path
-    # to the repo's ./public directory.
+    # to the repo's 'public' directory.
+    destdir = os.getcwd()
+
     if repo:
         reponame = os.path.splitext(filename)[0]
         destdir = createGitRepo(reponame)
             
-    # Open python file with pre-configured header
+    # Open python file with pre-configured values
     pyfile = os.path.abspath(destdir) + "/" + filename
     pyfileObj = open(pyfile, "w")
 
-    # Shebang line
-    pyfileObj.write('#!/usr/bin/env python')
-    pyfileObj.write('\n')
+    # Write the shebang line
+    pyfileObj.write('#!/usr/bin/env python' + '\n')
    
-    pyfileObj.write('# filename: ')
-    pyfileObj.write(filename)
-    pyfileObj.write('\n')
+    # Write the filename
+    pyfileObj.write('# filename: ' + filename + '\n')
 
     pyfileObj.write('# description: ')
-    # Prompt for python file description in case user wants to override.
+    # Prompt for optional python file description.
     filedescription = raw_input("Enter a description for your python file: ")
-    # If user does not want to override, take description from config.
-    if filedescription == '':
-        pyfileObj.write(config.get("file", "description"))
-        pyfileObj.write('\n')
+
+    if filedescription != '':
+        pyfileObj.write(filedescription + '\n')
     else:
-        pyfileObj.write(filedescription)
         pyfileObj.write('\n')
 
+    # Prompt for the optional python file's version number.
     pyfileObj.write('# fileversion: ')
-    # Prompt for the python file's version number in case user wants to override.
     fileversion = raw_input("Enter the python file's version number: ")
-    # If user does not want to override, take file version from config.
-    if fileversion == '':
-        pyfileObj.write(config.get("file", "fileversion"))
-        pyfileObj.write('\n')
+    if fileversion != '':
+        pyfileObj.write(fileversion + '\n')
     else:
-        pyfileObj.write(fileversion)
         pyfileObj.write('\n')
 
-    pyfileObj.write('# date: ')
-    pyfileObj.write(strftime("%Y%m%d"))
-    pyfileObj.write('\n')
-    pyfileObj.write('# author: ')
-    pyfileObj.write(config.get("author", "author"))
-    pyfileObj.write('\n')
-    pyfileObj.write('# email: ')
-    pyfileObj.write(config.get("author", "email"))
-    pyfileObj.write('\n')
-    pyfileObj.write('# license: ')
-    pyfileObj.write(config.get("license", "license"))
-    pyfileObj.write('\n')
-    pyfileObj.write('# python version: ')
-    pyfileObj.write(config.get("python_version", "python_version"))
-    pyfileObj.write('\n')
+    # Auto-generate and add date of file creation
+    pyfileObj.write('# date: ' + strftime("%Y%m%d") + '\n')
+
+    # Prompt for author's name...
+    author = raw_input("Enter author's name: ")
+    if author != '':
+        pyfileObj.write('# author: ' + author + '\n')
+    # ...or use author's name from config file.
+    else:
+        pyfileObj.write('# author: ' + config.get("author", "author") + '\n')
+
+    # Prompt for author's email address...
+    email = raw_input("Enter author's email address: ")
+    if email != '':
+        pyfileObj.write('# email: ' + email + '\n')
+    # ...or use author's email address from config file.
+    else:
+        pyfileObj.write('# email: ' + config.get("author", "email") + '\n')
+
+    # Prompt for license type...
+    license = raw_input("Enter license type [%s]: " %(config.get("license", "license"))) 
+
+    if license != '':
+        pyfileObj.write('# license: ' + license + '\n')
+    # ...or use license type from config file.
+    else:
+        pyfileObj.write('# license: ' + config.get("license", "license") + '\n')
+
+    # Auto-add python version
+    python_version = sys.version[:5] # This will spit out a bunch of other info, so slice it
+    pyfileObj.write('# python version: ' + python_version + '\n')
 
     # Also an empty main() definition
     pyfileObj.write('\n\n\n\n')
-    pyfileObj.write('def main():')
-    pyfileObj.write('\n')
-    pyfileObj.write("    print \'\'")
-    pyfileObj.write('\n\n')
-    pyfileObj.write('if __name__ == \"__main__\":')
-    pyfileObj.write('\n')
+    pyfileObj.write('def main():' + '\n')
+    pyfileObj.write("    print \'\'" + '\n\n')
+    pyfileObj.write('if __name__ == \"__main__\":' + '\n')
     pyfileObj.write('    main()')
 
-    # Make the python file executable
+    # Change file permissions to Make the python file executable
     os.chmod(pyfile, 0755)
-    #os.chmod(filename, 0755)
 
     pyfileObj.close()
         
+    # Open newly created and populated python file in default text editor
     myeditor = os.environ["EDITOR"] + " %s" %pyfile
     os.system(myeditor)
     exit()
@@ -196,22 +165,20 @@ def main():
     # Command line parameters
     usage = "Usage: %prog [options] arg"
     parser = OptionParser(usage)
-    #parser.add_option("-f", "--from-file", dest="from_file", action="store_true", help="read from configuration file")
-    parser.add_option("-c", "--config", dest="config_file", help="configure pytemplate")
+    parser.add_option("-c", "--config", dest="config_file", action="store_true",  help="configure pytemplate")
     parser.add_option("-g", "--git-repo", dest="git_repo", action="store_true", help="create a git repo for this file")
 
     (options, args) = parser.parse_args()
     
-    # If user wants to configure pytemplate
+    # Does user want to configure pytemplate?
     if options.config_file:
-        setConfig()
-
-    # If user also wants a git repo created for the python file
-    if options.git_repo:
-        readConfig(1)
-    # Default is to use options from config file
+        createConfigFile()
+    # Or, does user also wants a git repo created for the python file?
+    elif options.git_repo:
+        createPyFile(1)
+    # Default is to use options from config file and from user input to create a new python file.
     else:
-        readConfig()
+        createPyFile()
 
 if __name__ == "__main__":
     main()
