@@ -1,17 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # title          : pytemplate
 #description     : This will create a python file from a template, and optionally
 #                   create a git repo for it.
 #author          : Dayo Adewunmi
-#date            : 20130113
-#version         : 1.0
+#date            : 20200127
+#version         : 2.0
 #notes           :
 #license         : GNU GPL3 http://www.gnu.org/licenses/
-#python_version  : 2.6.6  
+#python_version  : 3
 #==============================================================================
 
 # Import the modules needed to run the script.
-import ConfigParser
+import configparser
 from optparse import OptionParser
 from os.path import exists
 from time import strftime
@@ -22,19 +22,19 @@ import sys
 
 def createConfigFile():
     """ Prompt for configuration options and write them to ~/.pytemplate.conf. """
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
 
     # Prompt for author name
-    author = raw_input("Enter your name: ")
+    author = input("Enter your name: ")
 
     # Prompt for author email address
-    authoremail = raw_input("Enter your email address: ")
+    authoremail = input("Enter your email address: ")
 
     config.add_section("author")
     config.set("author", "author", author)
     config.set("author", "email", authoremail)
 
-    licensinginfo = raw_input("Enter the python file's licensing information: ")
+    licensinginfo = input("Enter the python file's licensing information: ")
 
     config.add_section("license")
     config.set("license", "license", licensinginfo)
@@ -50,17 +50,17 @@ def createPyFile(repo=0):
         write to python file, else use the values provided user."""
 
     # Get config file
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(os.getenv('HOME') + '/.pytemplate.conf')
 
     # Prompt for filename of the python file.
     # filename is required, so keep prompting until it is provided.
     filename = ''
     while filename == '':
-        filename = raw_input("Please enter a filename for your python file: ")
+        filename = input("Please enter a filename for your python file: ")
         # Check if filename already exists, if it does, reset the filename variable.
         if exists(filename):
-            print "\nFile already exists. Please use a different filename."
+            print("\nFile already exists. Please use a different filename.")
             filename = ''
 
     # If requested, first create the git repo and point the path
@@ -83,7 +83,7 @@ def createPyFile(repo=0):
 
     pyfileObj.write('# description: ')
     # Prompt for optional python file description.
-    filedescription = raw_input("Enter a description for your python file: ")
+    filedescription = input("Enter a description for your python file: ")
 
     if filedescription != '':
         pyfileObj.write(filedescription + '\n')
@@ -92,7 +92,7 @@ def createPyFile(repo=0):
 
     # Prompt for the optional python file's version number.
     pyfileObj.write('# fileversion: ')
-    fileversion = raw_input("Enter the python file's version number: ")
+    fileversion = input("Enter the python file's version number: ")
     if fileversion != '':
         pyfileObj.write(fileversion + '\n')
     else:
@@ -102,7 +102,7 @@ def createPyFile(repo=0):
     pyfileObj.write('# date: ' + strftime("%Y%m%d") + '\n')
 
     # Prompt for author's name...
-    author = raw_input("Enter author's name: ")
+    author = input("Enter author's name: ")
     if author != '':
         pyfileObj.write('# author: ' + author + '\n')
     # ...or use author's name from config file.
@@ -110,7 +110,7 @@ def createPyFile(repo=0):
         pyfileObj.write('# author: ' + config.get("author", "author") + '\n')
 
     # Prompt for author's email address...
-    email = raw_input("Enter author's email address: ")
+    email = input("Enter author's email address: ")
     if email != '':
         pyfileObj.write('# email: ' + email + '\n')
     # ...or use author's email address from config file.
@@ -118,7 +118,7 @@ def createPyFile(repo=0):
         pyfileObj.write('# email: ' + config.get("author", "email") + '\n')
 
     # Prompt for license type...
-    license = raw_input("Enter license type [%s]: " %(config.get("license", "license"))) 
+    license = input("Enter license type [%s]: " %(config.get("license", "license"))) 
 
     if license != '':
         pyfileObj.write('# license: ' + license + '\n')
@@ -138,7 +138,7 @@ def createPyFile(repo=0):
     pyfileObj.write('    main()')
 
     # Change file permissions to Make the python file executable
-    os.chmod(pyfile, 0755)
+    os.chmod(pyfile, 0o755)
 
     pyfileObj.close()
         
